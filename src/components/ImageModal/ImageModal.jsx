@@ -1,16 +1,43 @@
-import PropTypes from "prop-types";
 import Modal from "react-modal";
+import PropTypes from "prop-types";
 import styles from "./ImageModal.module.css";
 
 const ImageModal = ({ isOpen, onClose, image }) => {
-  if (!image) {
-    return null; // Если image нет, не рендерим модалку
-  }
+  if (!image) return null;
+
+  const { alt_description, urls, user, likes } = image;
 
   return (
-    <Modal isOpen={isOpen} onRequestClose={onClose}>
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={onClose}
+      className={styles.modal}
+      overlayClassName={styles.overlay}
+      closeTimeoutMS={200}
+    >
       <div className={styles.modalContent}>
-        <img src={image.urls.small} alt={image.alt_description} />
+        <img
+          src={urls.full}
+          alt={alt_description}
+          className={styles.modalImage}
+        />
+        <div className={styles.imageInfo}>
+          <p>
+            <strong>Author:</strong> {user.name}
+          </p>
+          <p>
+            <strong>Likes:</strong> {likes}
+          </p>
+          <p>
+            <strong>Location:</strong> {user.location || "Unknown"}
+          </p>
+          <p>
+            <strong>Profile Link:</strong>{" "}
+            <a href={user.links.html} target="_blank" rel="noopener noreferrer">
+              Visit Authors Profile
+            </a>
+          </p>
+        </div>
       </div>
     </Modal>
   );
@@ -19,12 +46,7 @@ const ImageModal = ({ isOpen, onClose, image }) => {
 ImageModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  image: PropTypes.shape({
-    urls: PropTypes.shape({
-      small: PropTypes.string.isRequired,
-    }),
-    alt_description: PropTypes.string,
-  }),
+  image: PropTypes.object,
 };
 
 export default ImageModal;

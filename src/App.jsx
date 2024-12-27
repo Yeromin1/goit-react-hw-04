@@ -1,24 +1,26 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import SearchBar from "./components/SearchBar/SearchBar";
 import ImageGallery from "./components/ImageGallery/ImageGallery";
 import Loader from "./components/Loader/Loader";
 import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
 import ImageModal from "./components/ImageModal/ImageModal";
+import Modal from "react-modal";
 
 const App = () => {
   const [query, setQuery] = useState("");
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isButtonVisible, setIsButtonVisible] = useState(false);
 
   const API_KEY = "zKbEmOTumiq6bcRgNOFKq2wxoz95nHdp1lpOEviJJUI";
   const UNSPLASH_URL = "https://api.unsplash.com/search/photos";
 
-  // Функция для получения изображений из API
   const fetchImages = async () => {
     setLoading(true);
     try {
@@ -28,35 +30,52 @@ const App = () => {
           Authorization: `Client-ID ${API_KEY}`,
         },
       });
-      setImages((prevImages) => [...prevImages, ...response.data.results]);
+
+      if (response.data.results.length === 0) {
+        setHasMore(false);
+        toast.error(
+          "Sorry, there are no images matching your search query. Please try again!"
+        );
+      } else {
+        setImages((prevImages) => [...prevImages, ...response.data.results]);
+        setIsButtonVisible(true);
+      }
     } catch (err) {
-      // Мы больше не используем setError, потому что ошибка не обрабатывается
-      console.error("Failed to fetch images:", err);
+      if (err.response && err.response.status === 403) {
+        toast.error("Error: Please check your request limit.");
+      } else {
+        toast.error("An error occurred while loading images.");
+      }
+      console.error("Error while receiving images:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Эффект для получения изображений при изменении поискового запроса
   useEffect(() => {
     if (query) {
       setImages([]);
       setPage(1);
+      setHasMore(true);
+      setIsButtonVisible(false);
       fetchImages();
     }
   }, [query]);
 
-  // Обработчик отправки формы поиска
+  useEffect(() => {
+    Modal.setAppElement("#root");
+  }, []);
+
   const handleSearchSubmit = (query) => {
     setQuery(query);
   };
 
-  // Обработчик для кнопки "Загрузить больше"
   const handleLoadMore = () => {
     setPage((prevPage) => prevPage + 1);
+    setIsButtonVisible(false);
+    fetchImages();
   };
 
-  // Открытие модального окна с изображением
   const openModal = (image) => {
     if (image) {
       setSelectedImage(image);
@@ -64,7 +83,6 @@ const App = () => {
     }
   };
 
-  // Закрытие модального окна
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedImage(null);
@@ -73,13 +91,15 @@ const App = () => {
   return (
     <div>
       <SearchBar onSubmit={handleSearchSubmit} />
-      {loading && <Loader />}
       <ImageGallery images={images} onImageClick={openModal} />
-      {images.length > 0 && <LoadMoreBtn onClick={handleLoadMore} />}
+      {images.length > 0 && hasMore && isButtonVisible && (
+        <LoadMoreBtn onClick={handleLoadMore} />
+      )}
+      {loading && <Loader />}
       <ImageModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        image={selectedImage} // Передаем selectedImage, который может быть null
+        image={selectedImage}
       />
       <Toaster />
     </div>
