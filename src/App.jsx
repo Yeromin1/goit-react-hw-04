@@ -7,6 +7,7 @@ import Loader from "./components/Loader/Loader";
 import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
 import ImageModal from "./components/ImageModal/ImageModal";
 import Modal from "react-modal";
+import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
 
 const App = () => {
   const [query, setQuery] = useState("");
@@ -17,12 +18,14 @@ const App = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
+  const [error, setError] = useState(false);
 
   const API_KEY = "zKbEmOTumiq6bcRgNOFKq2wxoz95nHdp1lpOEviJJUI";
   const UNSPLASH_URL = "https://api.unsplash.com/search/photos";
 
   const fetchImages = async () => {
     setLoading(true);
+    setError(false);
     try {
       const response = await axios.get(UNSPLASH_URL, {
         params: { query, page, per_page: 12 },
@@ -41,6 +44,8 @@ const App = () => {
         setIsButtonVisible(true);
       }
     } catch (err) {
+      setError(true);
+      
       if (err.response && err.response.status === 403) {
         toast.error("Error: Please check your request limit.");
       } else {
@@ -91,6 +96,7 @@ const App = () => {
   return (
     <div>
       <SearchBar onSubmit={handleSearchSubmit} />
+      {error && <ErrorMessage />}
       <ImageGallery images={images} onImageClick={openModal} />
       {images.length > 0 && hasMore && isButtonVisible && (
         <LoadMoreBtn onClick={handleLoadMore} />

@@ -8,10 +8,7 @@ const ImageGallery = ({ images, onImageClick }) => {
     <ul className={styles.gallery}>
       {images.map((image, index) => (
         <li key={`${image.id}-${index}`}>
-          <div onClick={() => onImageClick(image)}>
-            {/* Обробка кліку на зображення */}
-            <ImageCard image={image} />
-          </div>
+          <ImageCard image={image} onImageClick={onImageClick} />
         </li>
       ))}
     </ul>
